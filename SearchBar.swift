@@ -13,15 +13,26 @@ struct SearchBar: View {
     @FocusState private var textFieldFocused: Bool
 
     var body: some View {
-        TextField("Search", text: $searchText)
-            .padding([.top, .bottom], 10)
-            .padding([.leading, .trailing], 20)
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
-            .focused($textFieldFocused)
-            .onChange(of: textFieldFocused) { newValue in
-                isFocused = newValue
+        HStack {
+            TextField("Search", text: $searchText)
+                .padding([.top, .bottom], 10)
+                .padding([.leading, .trailing], 20)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+                .focused($textFieldFocused)
+                .onChange(of: textFieldFocused) { newValue in
+                    isFocused = newValue
+                }
+
+            Spacer().frame(width: 8)
+
+            Button {
+                textFieldFocused = false
+            } label: {
+                Image(systemName: "cross")
             }
+
+        }
     }
 }
 
