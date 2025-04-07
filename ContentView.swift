@@ -13,45 +13,53 @@ struct ContentView: View {
 
     @State var shouldShowHeader: Bool = true
 
-    @State var scrollOffset: CGPoint = .zero
+    @State var scrollOffset: CGFloat = 0
 
     let listItemCount: Int = 20
 
     public var body: some View {
-        VStack(spacing: 0) {
-            if shouldShowHeader {
-                titleBar()
-            }
-
-            ScrollView {
-                LazyVStack(alignment: .leading, pinnedViews: [.sectionHeaders]) {
-                    Section {
-                        if shouldShowHeader {
-                            pageHeader("Page Header")
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                Color.white
+                    .frame(
+                        width: geometry.size.width,
+                        height: geometry.safeAreaInsets.top,
+                        alignment: .center
+                    )
+                    .aspectRatio(contentMode: ContentMode.fit)
+                    .zIndex(1)
+                if shouldShowHeader {
+                    titleBar()
+                }
+                
+                ScrollView {
+                    LazyVStack(alignment: .leading, pinnedViews: [.sectionHeaders]) {
+                        Section {
+                            if shouldShowHeader {
+                                pageHeader("Page Header")
+                            }
                         }
+                        
+                        Section {
+                            listView()
+                        } header: {
+                            searchBar()
+                                .ignoresSafeArea(.all, edges: .top)
+                        }
+                    }.background(GeometryReader { geometry in
+                        Color.clear.preference(key: ScrollOffsetPreferenceKey.self,
+                                               value: -geometry.frame(in: .named("scroll")).origin.y)
+                    })
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        self.scrollOffset = value
+                        print("offset >> \(value)")
                     }
-
-                    Section {
-                        listView()
-                    } header: {
-                        searchBar()
-                            .ignoresSafeArea(.all, edges: .top)
-                    }
+                }.coordinateSpace(name: "scroll")
+            }.onChange(of: isSearchBarFocused) { newValue in
+                withAnimation {
+                    shouldShowHeader = newValue == false
                 }
-            }.coordinateSpace(name: "scroll")
-                .background(GeometryReader { geometry in
-                    Color.clear.preference(key: ScrollOffsetPreferenceKey.self,
-                                           value: geometry.frame(in: .named("scroll")).origin)
-                })
-                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                    self.scrollOffset = value
-                    print("offset >> \(value)")
-                }
-
-        }.onChange(of: isSearchBarFocused) { newValue in
-            withAnimation {
-                shouldShowHeader = newValue == false
-            }
+            }.edgesIgnoringSafeArea(.top)
         }
     }
 
@@ -76,6 +84,7 @@ struct ContentView: View {
                 .frame(width: 24, height: 24)
         }.padding([.leading, .trailing], 16)
             .padding([.top, .bottom], 8)
+            .background(.white)
     }
 
     @ViewBuilder
@@ -106,8 +115,8 @@ extension ContentView {
 }
 
 struct ScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGPoint = .zero
-
-    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+    static var defaultValue = CGFloat.zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value += nextValue()
     }
 }
